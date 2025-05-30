@@ -75,7 +75,7 @@ class MovieRecommender:
     def _euclidean_distance(self, rating1, rating2):
         return 1 / (1 + abs(rating1 - rating2))
 
-    def _knn_similarity(self, movie1, movie2, genre_weight=0.2, rating_weight=0.2, title_weight=0.6):
+    def _knn_similarity(self, movie1, movie2, genre_weight=0.6, rating_weight=0.15, title_weight=0.25):
         genre_sim = self._cosine_similarity(movie1['genre_vector'], movie2['genre_vector'])
         rating_sim = self._euclidean_distance(movie1['norm_rating'], movie2['norm_rating'])
         title_sim = self._title_similarity(movie1['title'], movie2['title'])
@@ -129,7 +129,7 @@ class MovieRecommender:
 if __name__ == "__main__":
     try:
         recommender = MovieRecommender("top10K-TMDB-movies.csv")
-        movie = "I Want to Eat Your Pancreas"
+        movie = "John Wick"
         print(f"k-NN Recommendations for '{movie}':")
         knn_recommendations = recommender.recommend(movie, method="knn")
         for title in knn_recommendations:

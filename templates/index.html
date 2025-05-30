@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Recommender</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1c1c1c, #2d2d2d);
+      color: #fff;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    input[type="text"] {
+      padding: 0.5rem;
+      width: 300px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      margin-bottom: 1rem; 
+    }
+    
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #00c6ff;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease-in-out;
+    }
+    button:hover {
+      background: #0072ff;
+    }
+    .recommendations {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+    }
+    .box {
+      background: #333;
+      padding: 1rem;
+      border-radius: 12px;
+      width: 300px;
+    }
+    .box h2 {
+      border-bottom: 1px solid #555;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 0.3rem;
+      border-bottom: 1px solid #444;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎬 Movie Recommender</h1>
+  <input type="text" id="movieInput" placeholder="Enter movie title" oninput="showAutocomplete(this.value)">
+  <ul id="autocompleteList" style="list-style:none; margin-top: 0.5rem; padding: 0; color: #ccc;"></ul>
+  <button onclick="getRecommendations()">Get Recommendations</button>
+
+  <div class="recommendations">
+    <div class="box" id="knnBox">
+      <h2>k-NN Recommendations</h2>
+      <ul id="knnResults"></ul>
+    </div>
+    <div class="box" id="nbBox">
+      <h2>Naive Bayes Recommendations</h2>
+      <ul id="nbResults"></ul>
+    </div>
+  </div>
+
+  <script>
+    async function getRecommendations() {
+    const title = document.getElementById('movieInput').value;
+    const knnRes = await fetch(`/recommend?title=${encodeURIComponent(title)}&method=knn`);
+    const nbRes = await fetch(`/recommend?title=${encodeURIComponent(title)}&method=naive_bayes`);
+
+    const knnData = await knnRes.json();
+    const nbData = await nbRes.json();
+
+    const knnList = document.getElementById('knnResults');
+    const nbList = document.getElementById('nbResults');
+
+    knnList.innerHTML = '';
+    nbList.innerHTML = '';
+
+    showRecommendationsWithDelay(knnData, knnList);
+    showRecommendationsWithDelay(nbData, nbList);
+  }
+
+  async function showRecommendationsWithDelay(data, targetElement) {
+    for (let i = 0; i < data.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const li = document.createElement('li');
+      li.textContent = data[i];
+      li.style.opacity = '0';
+      li.style.transition = 'opacity 0.4s ease-in';
+      targetElement.appendChild(li);
+      requestAnimationFrame(() => {
+        li.style.opacity = '1';
+      });
+    }
+  }
+
+  async function showAutocomplete(query) {
+    const list = document.getElementById('autocompleteList');
+    list.innerHTML = '';
+    if (query.length < 3) return;
+
+    const res = await fetch(`/autocomplete?q=${encodeURIComponent(query)}`);
+    const suggestions = await res.json();
+
+    suggestions.forEach(title => {
+      const li = document.createElement('li');
+      li.textContent = title;
+      li.style.cursor = 'pointer';
+      li.onclick = () => {
+        document.getElementById('movieInput').value = title;
+        list.innerHTML = '';
+      };
+      list.appendChild(li);
+    });
+  }
+  </script>
+</body>
+</html>
