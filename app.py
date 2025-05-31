@@ -13,10 +13,16 @@ def recommend():
     title = request.args.get("title", "")
     method = request.args.get("method", "knn")
     try:
-        results = recommender.recommend(title, method=method)
-        return jsonify(results)
+        knn_recommendations = recommender.recommend(title, k=50, method="knn")
+        nb_recommendations = recommender.recommend(title, k=50, method="naive_bayes")
+        top_knn, top_nb = recommender.decision_module(title, knn_recommendations, nb_recommendations, k=7)
+
+        return jsonify({
+            "knn": top_knn,
+            "naive_bayes": top_nb
+        })
     except Exception as e:
-        return jsonify([])
+        return jsonify({"error": str(e)})
 
 @app.route("/autocomplete")
 def autocomplete():

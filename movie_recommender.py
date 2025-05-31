@@ -75,11 +75,11 @@ class MovieRecommender:
     def _euclidean_distance(self, rating1, rating2):
         return 1 / (1 + abs(rating1 - rating2))
 
-    def _knn_similarity(self, movie1, movie2, genre_weight=0.6, rating_weight=0.15, title_weight=0.25):
+    def _knn_similarity(self, movie1, movie2, genre_weight=0.7, rating_weight=0.3):
         genre_sim = self._cosine_similarity(movie1['genre_vector'], movie2['genre_vector'])
         rating_sim = self._euclidean_distance(movie1['norm_rating'], movie2['norm_rating'])
-        title_sim = self._title_similarity(movie1['title'], movie2['title'])
-        return genre_weight * genre_sim + rating_weight * rating_sim + title_weight * title_sim
+        
+        return genre_weight * genre_sim + rating_weight * rating_sim 
 
     def _naive_bayes_score(self, movie, target_genres_set, target_rating_bin):
         cls = movie['genres_set']
@@ -123,8 +123,18 @@ class MovieRecommender:
             raise ValueError("Method must be 'knn' or 'naive_bayes'")
 
         scores.sort(reverse=True)
-        return [title for _, title in scores[:k]]
+        return [title for _, title in scores[:max(150,k)]]
 
+    def decision_module(self, target_title, knn_recommendations, nb_recommendations, k = 5):
+        def score_and_sort(recommendations):
+            scored = [(self._title_similarity(target_title, title), title) for title in recommendations]
+            scored.sort(reverse=True)
+            return [title for _, title in scored[:k]]
+
+        top_knn_titles = score_and_sort(knn_recommendations)
+        top_nb_titles = score_and_sort(nb_recommendations)
+
+        return top_knn_titles, top_nb_titles
 
 if __name__ == "__main__":
     try:
@@ -138,6 +148,12 @@ if __name__ == "__main__":
         nb_recommendations = recommender.recommend(movie, method="naive_bayes")
         for title in nb_recommendations:
             print(title)
+        merged = recommender.decision_module(movie, knn_recommendations, nb_recommendations, k = 5)
+
+        print(f"\nFinal merged recommendations based on title similarity for '{movie}':")
+        for title in merged:
+            print(title)
+
     except FileNotFoundError:
         print("Film not found.")
     except Exception as e:

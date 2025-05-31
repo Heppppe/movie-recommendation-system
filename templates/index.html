@@ -53,6 +53,7 @@
     }
     .box h2 {
       border-bottom: 1px solid #555;
+      height: 75px;
       padding-bottom: 0.5rem;
       margin-bottom: 0.5rem;
     }
@@ -90,22 +91,26 @@
 
   <script>
     async function getRecommendations() {
-    const title = document.getElementById('movieInput').value;
-    const knnRes = await fetch(`/recommend?title=${encodeURIComponent(title)}&method=knn`);
-    const nbRes = await fetch(`/recommend?title=${encodeURIComponent(title)}&method=naive_bayes`);
+      const title = document.getElementById('movieInput').value;
+      const res = await fetch(`/recommend?title=${encodeURIComponent(title)}`);
+      const data = await res.json();
+      console.log(data)
+      const knnList = document.getElementById('knnResults');
+      const nbList = document.getElementById('nbResults');
 
-    const knnData = await knnRes.json();
-    const nbData = await nbRes.json();
+      knnList.innerHTML = '';
+      nbList.innerHTML = '';
 
-    const knnList = document.getElementById('knnResults');
-    const nbList = document.getElementById('nbResults');
-
-    knnList.innerHTML = '';
-    nbList.innerHTML = '';
-
-    showRecommendationsWithDelay(knnData, knnList);
-    showRecommendationsWithDelay(nbData, nbList);
-  }
+      if (data.knn && data.naive_bayes) {
+        showRecommendationsWithDelay(data.knn, knnList);
+        showRecommendationsWithDelay(data.naive_bayes, nbList);
+      } else {
+        const li = document.createElement('li');
+        li.textContent = "No recommendations found.";
+        knnList.appendChild(li.cloneNode(true));
+        nbList.appendChild(li.cloneNode(true));
+      }
+    }
 
   async function showRecommendationsWithDelay(data, targetElement) {
     for (let i = 0; i < data.length; i++) {
